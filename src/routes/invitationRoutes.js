@@ -12,5 +12,5 @@ const router = express.Router();
 // /api/invitations/validate
 router.post("/validate", validateInvitation);
 router.post("/create", authMiddleware, adminMiddleware, createInvitation);
-
+router.post("/", authMiddleware, adminMiddleware, createInvitation);
 module.exports = router;

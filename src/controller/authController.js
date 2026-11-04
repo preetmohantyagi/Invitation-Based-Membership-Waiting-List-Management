@@ -2,18 +2,21 @@ const generateToken = require("../utils/generateToken");
 const userModel = require("../models/userModel");
 const invitationModel = require("../models/invitationModel");
 const applicationModel = require("../models/applicationModel");
+const notificationModel = require("../models/notificationModel");
+const auditLogModel = require("../models/auditLogModel");
 const mongoose = require("mongoose");
 
 async function registerUser(req, res) {
   const { fullName, email, password, code } = req.body;
+
   if (!fullName || !email || !password || !code) {
     return res.status(400).json({
       message: "Bad Request ",
     });
   }
-
+  const normalizedEmail = email.trim().toLowerCase();
   const isExists = await userModel.findOne({
-    email: email,
+    email: normalizedEmail,
   });
 
   if (isExists) {
@@ -46,26 +49,110 @@ async function registerUser(req, res) {
     });
   }
   const session = await mongoose.startSession();
-  session.startTransaction();
+  try {
+    session.startTransaction();
+    const updatedInvitation = await invitationModel.findOneAndUpdate(
+      {
+        _id: invitation._id,
+        status: "ACTIVE",
+        $expr: {
+          $lt: ["$usedCount", "$maxUses"],
+        },
+      },
+      {
+        $inc: { usedCount: 1 },
+      },
+      {
+        returnDocument: "after",
+        session,
+      },
+    );
 
-  const user = await userModel.create({
-    fullName,
-    email,
-    password,
-  });
+    if (!updatedInvitation) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        message: "Invitation is no longer available",
+      });
+    }
+    if (updatedInvitation.usedCount >= updatedInvitation.maxUses) {
+      updatedInvitation.status = "EXHAUSTED";
+      await updatedInvitation.save({ session });
+    }
 
-  const token = generateToken(user._id);
-  res.cookie("token", token);
+    const user = await userModel.create(
+      [
+        {
+          fullName,
+          email: normalizedEmail,
+          password,
+          accountStatus: "PENDING_APPROVAL",
+        },
+      ],
+      { session },
+    );
+    const newUser = user[0];
+    const application = await applicationModel.create(
+      [
+        {
+          user: newUser._id,
+          invitation: updatedInvitation._id,
+        },
+      ],
+      { session },
+    );
 
-  res.status(201).json({
-    message: "User Registered Successfully",
-    user: {
-      _id: user._id,
-      email: user.email,
-      fullName: user.fullName,
-    },
-    token,
-  });
+    const newApplication = application[0];
+    await notificationModel.create(
+      [
+        {
+          user: newUser._id,
+          type: "APPLICATION_SUBMITTED",
+          message:
+            "Your membership application has been submitted successfully.",
+        },
+      ],
+      { session },
+    );
+    await auditLogModel.create(
+      [
+        {
+          performedBy: newUser._id,
+          action: "INVITATION_REDEEMED",
+          targetId: updatedInvitation._id,
+          details: `Application ${newApplication._id} submitted using invitation ${updatedInvitation.code}`,
+        },
+      ],
+      { session },
+    );
+    await session.commitTransaction();
+
+    const token = generateToken(newUser._id);
+    res.cookie("token", token);
+
+    res.status(201).json({
+      message: "User Registered Successfully",
+      user: {
+        _id: newUser._id,
+        email: newUser.email,
+        fullName: newUser.fullName,
+      },
+      token,
+    });
+  } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Email already registered",
+      });
+    }
+    return res.status(500).json({
+      message: error.message || "Registration failed",
+    });
+  } finally {
+    await session.endSession();
+  }
 }
 
 async function loginUser(req, res) {

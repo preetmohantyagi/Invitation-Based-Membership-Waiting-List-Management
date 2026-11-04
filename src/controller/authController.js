@@ -1,13 +1,25 @@
 const generateToken = require("../utils/generateToken");
+const jwt = require("jsonwebtoken");
 const userModel = require("../models/userModel");
 const invitationModel = require("../models/invitationModel");
 const applicationModel = require("../models/applicationModel");
 const notificationModel = require("../models/notificationModel");
 const auditLogModel = require("../models/auditLogModel");
 const mongoose = require("mongoose");
+const tokenBlacklistModel = require("../models/tokenBlacklistModel");
 
 async function registerUser(req, res) {
   const { fullName, email, password, code } = req.body;
+  if (
+    typeof fullName !== "string" ||
+    typeof email !== "string" ||
+    typeof password !== "string" ||
+    typeof code !== "string"
+  ) {
+    return res.status(400).json({
+      message: "Invalid input",
+    });
+  }
 
   if (!fullName || !email || !password || !code) {
     return res.status(400).json({
@@ -127,8 +139,12 @@ async function registerUser(req, res) {
     await session.commitTransaction();
 
     const token = generateToken(newUser._id);
-    res.cookie("token", token);
-
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+    });
     res.status(201).json({
       message: "User Registered Successfully",
       user: {
@@ -136,7 +152,6 @@ async function registerUser(req, res) {
         email: newUser.email,
         fullName: newUser.fullName,
       },
-      token,
     });
   } catch (error) {
     if (session.inTransaction()) {
@@ -148,7 +163,7 @@ async function registerUser(req, res) {
       });
     }
     return res.status(500).json({
-      message: error.message || "Registration failed",
+      message: "Registration failed",
     });
   } finally {
     await session.endSession();
@@ -157,13 +172,21 @@ async function registerUser(req, res) {
 
 async function loginUser(req, res) {
   const { email, password } = req.body;
+  if (typeof email !== "string" || typeof password !== "string") {
+    return res.status(400).json({
+      message: "Invalid input",
+    });
+  }
   if (!email || !password) {
     return res.status(400).json({
       message: "Email and password are required",
     });
   }
+  const normalizedEmail = email.trim().toLowerCase();
 
-  const user = await userModel.findOne({ email }).select("+password");
+  const user = await userModel
+    .findOne({ email: normalizedEmail })
+    .select("+password");
   if (!user) {
     return res.status(401).json({
       message: "Email or password is Invalid",
@@ -177,8 +200,12 @@ async function loginUser(req, res) {
     });
   }
   const token = generateToken(user._id);
-  res.cookie("token", token);
-
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 3 * 24 * 60 * 60 * 1000,
+  });
   res.status(200).json({
     message: "User Login Successfully",
     user: {
@@ -186,7 +213,49 @@ async function loginUser(req, res) {
       email: user.email,
       fullName: user.fullName,
     },
-    token,
   });
 }
-module.exports = { registerUser, loginUser };
+
+async function logoutUser(req, res) {
+  const token = req.cookies?.token;
+  try {
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      await tokenBlacklistModel.create({
+        jti: decoded.jti,
+        expiresAt: new Date(decoded.exp * 1000),
+      });
+    }
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+
+    return res.status(200).json({
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+    if (
+      error.name === "JsonWebTokenError" ||
+      error.name === "TokenExpiredError" ||
+      error.name === "NotBeforeError"
+    ) {
+      return res.status(200).json({
+        message: "Logged out successfully",
+      });
+    }
+
+    return res.status(500).json({
+      message: "Logout failed. Please try again.",
+    });
+  }
+}
+
+module.exports = { registerUser, loginUser, logoutUser };

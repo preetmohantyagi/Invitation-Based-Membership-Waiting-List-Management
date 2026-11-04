@@ -1,5 +1,6 @@
 const applicationModel = require("../models/applicationModel");
 const invitationModel = require("../models/invitationModel");
+const notificationModel = require("../models/notificationModel");
 
 async function getMyApplication(req, res) {
   const application = await applicationModel.findOne({ user: req.user._id });
@@ -45,4 +46,46 @@ async function withdrawApplication(req, res) {
     status: application.status,
   });
 }
-module.exports = { getMyApplication, getMyInvitations };
+
+async function getMyNotifications(req, res) {
+  const notifications = await notificationModel
+    .find({ user: req.user._id })
+    .sort({ createdAt: -1 });
+
+  return res.status(200).json({
+    count: notifications.length,
+    notifications,
+  });
+}
+
+async function markNotificationAsRead(req, res) {
+  const notification = await notificationModel.findOneAndUpdate(
+    {
+      _id: req.params.id,
+      user: req.user._id,
+    },
+    {
+      isRead: true,
+    },
+    {
+      returnDocument: "after",
+    },
+  );
+  if (!notification) {
+    return res.status(404).json({
+      message: "Notification Not Found",
+    });
+  }
+
+  return res.status(200).json({
+    message: "Notification marked as read",
+    notification,
+  });
+}
+module.exports = {
+  getMyApplication,
+  getMyInvitations,
+  withdrawApplication,
+  getMyNotifications,
+  markNotificationAsRead,
+};

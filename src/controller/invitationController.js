@@ -1,6 +1,8 @@
 const invitationModel = require("../models/invitationModel");
 const userModel = require("../models/userModel");
 const generateInviteCode = require("../utils/generateInviteCode");
+const auditLogModel = require("../models/auditLogModel");
+
 async function validateInvitation(req, res) {
   const { code } = req.body;
   if (!code) {
@@ -45,6 +47,12 @@ async function createInvitation(req, res) {
     expiresAt,
     createdBy: req.user._id,
   });
+  await auditLogModel.create({
+    performedBy: req.user._id,
+    action: "INVITATION_CREATED",
+    targetId: invitation._id,
+    details: `Invitation ${invitation.code} created with maximum ${invitation.maxUses} uses`,
+  });
   return res.status(201).json({
     message: "Invitation created successfully",
     code: invitation.code,
@@ -76,7 +84,15 @@ async function revokeInvitation(req, res) {
     });
   }
   invitation.status = "REVOKED";
+
   await invitation.save();
+
+  await auditLogModel.create({
+    performedBy: req.user._id,
+    action: "INVITATION_REVOKED",
+    targetId: invitation._id,
+    details: `Invitation ${invitation.code} was revoked`,
+  });
 
   return res.status(200).json({
     message: "Invitation Revoked Successfully",
@@ -92,6 +108,12 @@ async function createMemberInvitation(req, res) {
     maxUses,
     expiresAt,
     createdBy: req.user._id,
+  });
+  await auditLogModel.create({
+    performedBy: req.user._id,
+    action: "INVITATION_CREATED",
+    targetId: invitation._id,
+    details: `Member created invitation ${invitation.code}`,
   });
   return res.status(201).json({
     message: "Invitation created successfully",

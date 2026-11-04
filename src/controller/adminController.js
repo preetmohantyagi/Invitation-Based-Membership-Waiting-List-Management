@@ -315,6 +315,17 @@ async function getApplicationDetails(req, res) {
   });
 }
 
+async function getAuditLogs(req, res) {
+  const logs = await auditLogModel
+    .find()
+    .populate("performedBy", "fullName email")
+    .sort({ createdAt: -1 });
+
+  return res.status(200).json({
+    count: logs.length,
+    logs,
+  });
+}
 module.exports = {
   getAllApplications,
   updateApplicationPriority,
@@ -322,4 +333,5 @@ module.exports = {
   rejectApplication,
   markUnderReview,
   getApplicationDetails,
+  getAuditLogs,
 };

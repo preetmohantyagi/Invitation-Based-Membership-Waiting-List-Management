@@ -15,7 +15,7 @@ function csrfMiddleware(req, res, next) {
       message: "CSRF protection: Request blocked",
     });
   }
-
+  
   next();
 }
 

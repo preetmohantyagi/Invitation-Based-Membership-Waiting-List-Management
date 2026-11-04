@@ -164,6 +164,7 @@ async function approveApplication(req, res) {
 }
 
 async function rejectApplication(req, res) {
+  
   const session = await mongoose.startSession();
   session.startTransaction();
   try {

@@ -8,6 +8,7 @@ function csrfMiddleware(req, res, next) {
   }
 
   const origin = req.get("Origin");
+  
   const csrfHeader = req.get("X-CSRF-Protection");
 
   if (origin !== allowedOrigin || csrfHeader !== "1") {

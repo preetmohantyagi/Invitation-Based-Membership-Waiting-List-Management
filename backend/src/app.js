@@ -35,4 +35,5 @@ app.get("/", (req, res) => {
   res.send("Invitation-Based Membership Platform up and running");
 });
 app.use(errorMiddleware);
+
 module.exports = app;

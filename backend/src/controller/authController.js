@@ -172,7 +172,7 @@ async function registerUser(req, res) {
 
 async function loginUser(req, res) {
   const { email, password } = req.body;
-  
+
   if (typeof email !== "string" || typeof password !== "string") {
     return res.status(400).json({
       message: "Invalid input",
@@ -258,5 +258,14 @@ async function logoutUser(req, res) {
     });
   }
 }
+async function getCurrentUser(req, res) {
+  res.status(200).json({
+    user: {
+      _id: req.user._id,
+      email: req.user.email,
+      fullName: req.user.fullName,
+    },
+  });
+}
 
-module.exports = { registerUser, loginUser, logoutUser };
+module.exports = { registerUser, loginUser, logoutUser,getCurrentUser };

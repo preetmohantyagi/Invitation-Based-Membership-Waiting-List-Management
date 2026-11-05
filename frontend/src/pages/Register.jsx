@@ -47,7 +47,7 @@ const Register = () => {
         <input onChange={(e) => {
           setInvitationCode(e.target.value)}}  type="text" value={invitationCode}  id="invitationCode" name="invitationCode" required />
 
-        <button  type="submit">Submit</button>
+        <button  type="submit">Register</button>
 
         
         

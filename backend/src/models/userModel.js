@@ -39,6 +39,7 @@ const userSchema = new mongoose.Schema(
         message:
           "Account Status can be either INVITE_REQUIRED, PENDING_APPROVAL, ACTIVE, REJECTED, SUSPENDED or  DISABLED",
       },
+      default: "PENDING_APPROVAL",
     },
     password: {
       type: String,

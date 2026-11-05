@@ -264,8 +264,10 @@ async function getCurrentUser(req, res) {
       _id: req.user._id,
       email: req.user.email,
       fullName: req.user.fullName,
+      accountStatus: req.user.accountStatus,
+      role: req.user.role,
     },
   });
 }
 
-module.exports = { registerUser, loginUser, logoutUser,getCurrentUser };
+module.exports = { registerUser, loginUser, logoutUser, getCurrentUser };

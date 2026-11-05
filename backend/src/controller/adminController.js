@@ -58,6 +58,39 @@ async function getAllApplications(req, res) {
     applications,
   });
 }
+async function getDashboardStats(req, res) {
+  try {
+    const totalMembers = await userModel.countDocuments({
+      role: "USER",
+    });
+
+    const totalAdmins = await userModel.countDocuments({
+      role: "ADMIN",
+    });
+
+    const pendingApplications = await applicationModel.countDocuments({
+      status: "PENDING",
+    });
+
+    const activeMembers = await userModel.countDocuments({
+      role: "USER",
+      accountStatus: "ACTIVE",
+    });
+
+    return res.status(200).json({
+      totalMembers,
+      totalAdmins,
+      pendingApplications,
+      activeMembers,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Failed to fetch dashboard statistics",
+    });
+  }
+}
 
 async function updateApplicationPriority(req, res) {
   const applicationId = req.params.id;
@@ -164,7 +197,6 @@ async function approveApplication(req, res) {
 }
 
 async function rejectApplication(req, res) {
-  
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -335,4 +367,5 @@ module.exports = {
   markUnderReview,
   getApplicationDetails,
   getAuditLogs,
+  getDashboardStats,
 };

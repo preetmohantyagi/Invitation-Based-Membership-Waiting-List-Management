@@ -11,6 +11,7 @@ const {
   markUnderReview,
   getApplicationDetails,
   getAuditLogs,
+  getDashboardStats,
 } = require("../controller/adminController");
 
 const {
@@ -20,6 +21,7 @@ const {
 } = require("../controller/invitationController");
 
 router.get("/", authMiddleware, adminMiddleware, getAllApplications);
+router.get("/stats", authMiddleware, adminMiddleware, getDashboardStats);
 
 router.get("/audit-logs", authMiddleware, adminMiddleware, getAuditLogs);
 

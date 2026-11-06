@@ -33,6 +33,12 @@ router.get(
 );
 
 router.get("/invitations", authMiddleware, adminMiddleware, getAllInvitations);
+router.post(
+  "/invitations",
+  authMiddleware,
+  adminMiddleware,
+  createMemberInvitation,
+);
 
 router.patch(
   "/applications/:id/priority",

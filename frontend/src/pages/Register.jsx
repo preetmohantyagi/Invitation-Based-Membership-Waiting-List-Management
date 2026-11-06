@@ -1,58 +1,60 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import api from "../services/api";
 
+import RegisterHeader from "../components/auth/RegisterHeader";
+import RegisterForm from "../components/auth/RegisterForm";
+import AuthMessage from "../components/auth/AuthMessage";
+import AuthLayout from "../components/auth/AuthLayout";
+
 const Register = () => {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [invitationCode, setInvitationCode] = useState("");
-  const [message, setMessage] = useState("")
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    invitationCode: "",
+  });
 
-  const handleSubmit= async function(e){
-    e.preventDefault()
-    const data={
-      fullName:String(fullName),
-      email:String(email),
-      password:String(password),
-      code:String(invitationCode)
-    }
+  const [message, setMessage] = useState("");
+
+  const handleChange = (field) => (e) => {
+    setFormData((previousData) => ({
+      ...previousData,
+      [field]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const data = {
+      ...formData,
+      code: formData.invitationCode,
+    };
+
+    delete data.invitationCode;
+
     try {
-     const response = await api.post("/api/auth/register",data)
-      setMessage(response.data.message)
+      const response = await api.post("/api/auth/register", data);
+      setMessage(response.data.message);
     } catch (error) {
-      setMessage(error.response?.data?.message)
+      setMessage(error.response?.data?.message || "Registration failed");
     }
-  }
+  };
+
   return (
-    <div>
-      <h1>Create Your Account</h1>
-      <p>Join the DNEG Community</p>
-      {message && <p>{message}</p>}
-      <form  onSubmit={handleSubmit}>
-        <label htmlFor="fullName">Full Name</label>
-        <input onChange={(e) => {
-          setFullName(e.target.value)
-        }
-        } type="text" value={fullName} id="fullName" name="fullName" required />
+    <AuthLayout>
+      <RegisterHeader />
 
-        <label htmlFor="email">Email</label>
-        <input onChange={(e) => {
-          setEmail(e.target.value)}} type="email" value={email}  id="email" name="email" required />
+      <AuthMessage message={message} />
 
-        <label htmlFor="password">Password</label>
-        <input onChange={(e) => {
-          setPassword(e.target.value)}}  type="password" value={password}  id="password" name="password" required />
-
-        <label htmlFor="invitationCode">Invitation Code</label>
-        <input onChange={(e) => {
-          setInvitationCode(e.target.value)}}  type="text" value={invitationCode}  id="invitationCode" name="invitationCode" required />
-
-        <button  type="submit">Register</button>
-
-        
-        
-      </form>
-    </div>
+      <div className="mt-8">
+        <RegisterForm
+          formData={formData}
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+        />
+      </div>
+    </AuthLayout>
   );
 };
 

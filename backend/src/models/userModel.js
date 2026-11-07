@@ -47,17 +47,6 @@ const userSchema = new mongoose.Schema(
       minlength: [6, "password should contain more than 6 character"],
       select: false,
     },
-    invitationQuota: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    invitationsCreated: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
   },
   {
     timestamps: true,

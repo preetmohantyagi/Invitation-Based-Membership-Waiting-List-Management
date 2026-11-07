@@ -1,9 +1,4 @@
 function CreateInvitationForm({ onSubmit, onCancel }) {
-  // expiry must be a future date, so earliest selectable day is tomorrow
-  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
-
   return (
     <form
       onSubmit={onSubmit}
@@ -36,7 +31,6 @@ function CreateInvitationForm({ onSubmit, onCancel }) {
         <input
           type="date"
           name="expiresAt"
-          min={tomorrow}
           className="w-full rounded-lg border border-slate-300 px-4 py-2.5"
         />
       </div>

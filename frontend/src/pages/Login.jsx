@@ -32,15 +32,7 @@ const Login = () => {
 
       setMessage(response.data.message);
       setUser(response.data.user);
-      const loggedInUser = response.data.user;
-
-      if (loggedInUser.role === "ADMIN") {
-        navigate("/admin");
-      } else if (loggedInUser.accountStatus === "ACTIVE") {
-        navigate("/dashboard");
-      } else {
-        navigate("/pending-approval");
-      }
+      navigate("/dashboard");
     } catch (error) {
       setMessage(error.response?.data?.message || "Something went wrong");
     } finally {

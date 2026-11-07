@@ -1,11 +1,6 @@
 import ApplicationActions from "./ApplicationActions";
 
-const ApplicationTableRow = ({
-  application,
-  onReview,
-  onApprove,
-  onReject,
-}) => {
+const ApplicationTableRow = ({ application, onApprove, onReject }) => {
   const statusColors = {
     PENDING: "bg-yellow-100 text-yellow-800",
     UNDER_REVIEW: "bg-blue-100 text-blue-800",
@@ -24,10 +19,6 @@ const ApplicationTableRow = ({
         {application.user?.email || "N/A"}
       </td>
 
-      <td className="px-6 py-4 text-slate-600">{application.company}</td>
-
-      <td className="px-6 py-4 text-slate-600">{application.priority}</td>
-
       <td className="px-6 py-4">
         <span
           className={`rounded-full px-3 py-1 text-xs font-medium ${
@@ -41,7 +32,6 @@ const ApplicationTableRow = ({
       <td className="px-6 py-4">
         <ApplicationActions
           application={application}
-          onReview={onReview}
           onApprove={onApprove}
           onReject={onReject}
         />

@@ -10,40 +10,68 @@ const {
   rejectApplication,
   markUnderReview,
   getApplicationDetails,
-  updateApplicationNotes,
   getAuditLogs,
   getDashboardStats,
-  getActiveMembers,
-  updateMemberQuota,
 } = require("../controller/adminController");
 
 const {
   getAllInvitations,
-  getInvitationRedemptions,
   revokeInvitation,
-  createInvitation,
+  createMemberInvitation,
 } = require("../controller/invitationController");
 
-// every admin route needs a logged-in ADMIN
-router.use(authMiddleware, adminMiddleware);
+router.get("/", authMiddleware, adminMiddleware, getAllApplications);
+router.get("/stats", authMiddleware, adminMiddleware, getDashboardStats);
 
-router.get("/", getAllApplications);
-router.get("/stats", getDashboardStats);
-router.get("/audit-logs", getAuditLogs);
+router.get("/audit-logs", authMiddleware, adminMiddleware, getAuditLogs);
 
-router.get("/applications/:id", getApplicationDetails);
-router.patch("/applications/:id/priority", updateApplicationPriority);
-router.patch("/applications/:id/review", markUnderReview);
-router.patch("/applications/:id/approve", approveApplication);
-router.patch("/applications/:id/reject", rejectApplication);
-router.patch("/applications/:id/notes", updateApplicationNotes);
+router.get(
+  "/applications/:id",
+  authMiddleware,
+  adminMiddleware,
+  getApplicationDetails,
+);
 
-router.get("/members", getActiveMembers);
-router.patch("/members/:memberId/quota", updateMemberQuota);
+router.get("/invitations", authMiddleware, adminMiddleware, getAllInvitations);
+router.post(
+  "/invitations",
+  authMiddleware,
+  adminMiddleware,
+  createMemberInvitation,
+);
 
-router.get("/invitations", getAllInvitations);
-router.post("/invitations", createInvitation);
-router.get("/invitations/:id/redemptions", getInvitationRedemptions);
-router.patch("/invitations/:id/revoke", revokeInvitation);
+router.patch(
+  "/applications/:id/priority",
+  authMiddleware,
+  adminMiddleware,
+  updateApplicationPriority,
+);
 
+router.patch(
+  "/applications/:id/approve",
+  authMiddleware,
+  adminMiddleware,
+  approveApplication,
+);
+
+router.patch(
+  "/applications/:id/reject",
+  authMiddleware,
+  adminMiddleware,
+  rejectApplication,
+);
+
+router.patch(
+  "/applications/:id/review",
+  authMiddleware,
+  adminMiddleware,
+  markUnderReview,
+);
+
+router.patch(
+  "/invitations/:id/revoke",
+  authMiddleware,
+  adminMiddleware,
+  revokeInvitation,
+);
 module.exports = router;

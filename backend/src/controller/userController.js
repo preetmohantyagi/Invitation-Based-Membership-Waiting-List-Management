@@ -1,7 +1,6 @@
 const applicationModel = require("../models/applicationModel");
 const invitationModel = require("../models/invitationModel");
 const notificationModel = require("../models/notificationModel");
-const auditLogModel = require("../models/auditLogModel");
 
 async function getMyApplication(req, res) {
   const application = await applicationModel.findOne({ user: req.user._id });
@@ -42,12 +41,6 @@ async function withdrawApplication(req, res) {
   }
   application.status = "WITHDRAWN";
   await application.save();
-  await auditLogModel.create({
-    performedBy: req.user._id,
-    action: "APPLICATION_WITHDRAWN",
-    targetId: application._id,
-    details: `Application withdrawn by ${req.user.email}`,
-  });
   return res.status(200).json({
     message: "Application Withdrawn Successfully",
     status: application.status,

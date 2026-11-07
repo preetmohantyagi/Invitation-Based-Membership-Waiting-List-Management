@@ -9,47 +9,21 @@ const mongoose = require("mongoose");
 const tokenBlacklistModel = require("../models/tokenBlacklistModel");
 
 async function registerUser(req, res) {
-  const {
-    fullName,
-    email,
-    password,
-    code,
-    phone,
-    designation,
-    company,
-    industry,
-    experience,
-    location,
-  } = req.body;
-  const applicantFields = [
-    phone,
-    designation,
-    company,
-    industry,
-    experience,
-    location,
-  ];
+  const { fullName, email, password, code } = req.body;
   if (
     typeof fullName !== "string" ||
     typeof email !== "string" ||
     typeof password !== "string" ||
-    typeof code !== "string" ||
-    applicantFields.some((field) => typeof field !== "string")
+    typeof code !== "string"
   ) {
     return res.status(400).json({
       message: "Invalid input",
     });
   }
 
-  if (
-    !fullName.trim() ||
-    !email.trim() ||
-    !password ||
-    !code.trim() ||
-    applicantFields.some((field) => !field.trim())
-  ) {
+  if (!fullName || !email || !password || !code) {
     return res.status(400).json({
-      message: "All fields are required",
+      message: "Bad Request ",
     });
   }
   const normalizedEmail = email.trim().toLowerCase();
@@ -96,7 +70,6 @@ async function registerUser(req, res) {
         $expr: {
           $lt: ["$usedCount", "$maxUses"],
         },
-        $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }],
       },
       {
         $inc: { usedCount: 1 },
@@ -121,7 +94,7 @@ async function registerUser(req, res) {
     const user = await userModel.create(
       [
         {
-          fullName: fullName.trim(),
+          fullName,
           email: normalizedEmail,
           password,
           accountStatus: "PENDING_APPROVAL",
@@ -135,12 +108,6 @@ async function registerUser(req, res) {
         {
           user: newUser._id,
           invitation: updatedInvitation._id,
-          phone,
-          designation,
-          company,
-          industry,
-          experience,
-          location,
         },
       ],
       { session },
@@ -184,19 +151,11 @@ async function registerUser(req, res) {
         _id: newUser._id,
         email: newUser.email,
         fullName: newUser.fullName,
-        role: newUser.role,
-        accountStatus: newUser.accountStatus,
       },
     });
   } catch (error) {
     if (session.inTransaction()) {
       await session.abortTransaction();
-    }
-    if (error.name === "ValidationError") {
-      const firstError = Object.values(error.errors)[0];
-      return res.status(400).json({
-        message: firstError?.message || "Invalid input",
-      });
     }
     if (error.code === 11000) {
       return res.status(409).json({
@@ -241,11 +200,6 @@ async function loginUser(req, res) {
       message: "Email or password is Invalid",
     });
   }
-  if (["SUSPENDED", "DISABLED"].includes(user.accountStatus)) {
-    return res.status(403).json({
-      message: "Your account is not allowed to login. Please contact support.",
-    });
-  }
   const token = generateToken(user._id);
   res.cookie("token", token, {
     httpOnly: true,
@@ -259,11 +213,6 @@ async function loginUser(req, res) {
       _id: user._id,
       email: user.email,
       fullName: user.fullName,
-      role: user.role,
-      accountStatus: user.accountStatus,
-      invitationQuota: user.invitationQuota,
-      invitationsCreated: user.invitationsCreated,
-      createdAt: user.createdAt,
     },
   });
 }
@@ -317,9 +266,6 @@ async function getCurrentUser(req, res) {
       fullName: req.user.fullName,
       accountStatus: req.user.accountStatus,
       role: req.user.role,
-      invitationQuota: req.user.invitationQuota,
-      invitationsCreated: req.user.invitationsCreated,
-      createdAt: req.user.createdAt,
     },
   });
 }

@@ -7,7 +7,8 @@ function InvitationTable({ invitations, onRevoke }) {
         <thead className="bg-slate-100 text-slate-600 text-sm">
           <tr>
             <th className="p-4">Code</th>
-            <th className="p-4">Usage</th>
+            <th className="p-4">Created By</th>
+            <th className="p-4">Used</th>
             <th className="p-4">Remaining</th>
             <th className="p-4">Expiry</th>
             <th className="p-4">Status</th>

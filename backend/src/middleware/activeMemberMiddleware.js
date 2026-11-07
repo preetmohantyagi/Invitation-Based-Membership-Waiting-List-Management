@@ -1,10 +1,17 @@
 function activeMemberMiddleware(req, res, next) {
-  if (req.user.accountStatus === "ACTIVE") {
-    return next();
+  if (!req.user) {
+    return res.status(401).json({
+      message: "Authentication required",
+    });
   }
-  return res.status(403).json({
-    message: "Forbidden Access",
-  });
+
+  if (req.user.role !== "USER" || req.user.accountStatus !== "ACTIVE") {
+    return res.status(403).json({
+      message: "Active membership required",
+    });
+  }
+
+  return next();
 }
 
 module.exports = activeMemberMiddleware;

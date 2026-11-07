@@ -9,28 +9,30 @@ const AdminDashboard = () => {
   const [applicationsLoading, setApplicationsLoading] = useState(true);
   const [applications, setApplications] = useState([]);
   const [stats, setStats] = useState({
-    totalMembers: 0,
-    totalAdmins: 0,
+    totalApplicants: 0,
     pendingApplications: 0,
-    activeMembers: 0,
+    underReviewApplications: 0,
+    approvedUsers: 0,
+    rejectedApplications: 0,
   });
 
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const [priority, setPriority] = useState("");
+  const [sort, setSort] = useState("newest");
+
+  const fetchStats = async () => {
+    try {
+      const response = await api.get("/api/admin/stats");
+      setStats(response.data);
+    } catch (error) {
+      console.log(error.response?.data?.message || error.message);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await api.get("/api/admin/stats");
-        setStats(response.data);
-      } catch (error) {
-        console.log(error.response?.data?.message || error.message);
-      } finally {
-        setStatsLoading(false);
-      }
-    };
-
     fetchStats();
   }, []);
 
@@ -43,6 +45,7 @@ const AdminDashboard = () => {
             search: search,
             status: status,
             priority: priority,
+            sort: sort,
           },
         });
 
@@ -55,7 +58,7 @@ const AdminDashboard = () => {
     };
 
     fetchApplications();
-  }, [search, status, priority]);
+  }, [search, status, priority, sort]);
 
   const handleApplicationAction = async (applicationId, action) => {
     try {
@@ -71,6 +74,7 @@ const AdminDashboard = () => {
         ),
       );
 
+      fetchStats();
       alert(response.data.message);
     } catch (error) {
       alert(error.response?.data?.message || `${action} failed`);
@@ -97,6 +101,8 @@ const AdminDashboard = () => {
             setStatus={setStatus}
             priority={priority}
             setPriority={setPriority}
+            sort={sort}
+            setSort={setSort}
           />
           {applicationsLoading ? (
             <p className="mt-6 rounded-xl bg-white p-8 text-center text-slate-500">
@@ -105,6 +111,7 @@ const AdminDashboard = () => {
           ) : (
             <ApplicationsTable
               applications={applications}
+              onReview={(id) => handleApplicationAction(id, "review")}
               onApprove={(id) => handleApplicationAction(id, "approve")}
               onReject={(id) => handleApplicationAction(id, "reject")}
             />

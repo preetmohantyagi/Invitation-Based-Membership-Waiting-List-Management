@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import MemberRoute from "./components/MemberRoute";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -11,11 +10,14 @@ import ApplicationDetails from "./pages/admin/ApplicationDetails";
 import PendingApproval from "./pages/PendingApproval";
 import Navbar from "./components/Navbar";
 import InvitationManagement from "./pages/admin/InvitationManagement";
+import MemberQuotas from "./pages/admin/MemberQuotas";
 
 function App() {
+  
   return (
     <>
       <BrowserRouter>
+        <Navbar/>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<Register />} />
@@ -42,6 +44,14 @@ function App() {
             element={
               <AdminRoute>
                 <InvitationManagement />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/members"
+            element={
+              <AdminRoute>
+                <MemberQuotas />
               </AdminRoute>
             }
           />

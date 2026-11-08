@@ -40,7 +40,7 @@ const AdminDashboard = () => {
     const fetchApplications = async () => {
       try {
         setApplicationsLoading(true);
-        const response = await api.get("/api/admin/", {
+        const response = await api.get("/api/admin", {
           params: {
             search: search,
             status: status,

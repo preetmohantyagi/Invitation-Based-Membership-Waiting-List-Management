@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-app.set("trust proxy", 1);
+app.set("trust proxy", 2);
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const invitationRoutes = require("./routes/invitationRoutes");

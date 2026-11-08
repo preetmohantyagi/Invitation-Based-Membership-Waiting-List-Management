@@ -19,7 +19,7 @@ const ApplicationDetails = () => {
     try {
       const response = await api.get(`/api/admin/applications/${id}`);
       setApplication(response.data.application);
-      setHistory(response.data.history);
+      setHistory(response.data.history ?? []);
     } catch (error) {
       console.log(error.response?.data?.message || error.message);
     } finally {

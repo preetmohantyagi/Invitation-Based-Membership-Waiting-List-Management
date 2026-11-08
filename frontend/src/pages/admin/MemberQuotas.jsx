@@ -106,7 +106,7 @@ const MemberQuotas = () => {
     const fetchMembers = async () => {
       try {
         const response = await api.get("/api/admin/members");
-        setMembers(response.data.members);
+        setMembers(response.data.members ?? []);
       } catch (error) {
         console.log(error.response?.data?.message || error.message);
       } finally {

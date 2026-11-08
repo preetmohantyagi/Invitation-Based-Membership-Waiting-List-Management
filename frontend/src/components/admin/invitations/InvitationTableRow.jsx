@@ -15,7 +15,7 @@ function InvitationTableRow({ invitation, onRevoke }) {
       const response = await api.get(
         `/api/admin/invitations/${invitation._id}/redemptions`,
       );
-      setRedemptions(response.data.redemptions);
+      setRedemptions(response.data.redemptions ?? []);
       setHistoryMessage("");
     } catch (error) {
       setHistoryMessage(

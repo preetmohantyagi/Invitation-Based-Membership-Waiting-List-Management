@@ -10,7 +10,7 @@ function useMemberInvitations() {
   async function fetchInvitations() {
     try {
       const response = await api.get("/api/users/invitations");
-      setInvitations(response.data.invitations);
+      setInvitations(response.data.invitations ?? []);
     } catch (error) {
       console.error(
         "Failed to fetch invitations:",

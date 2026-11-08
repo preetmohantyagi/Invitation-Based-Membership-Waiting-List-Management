@@ -49,7 +49,7 @@ const AdminDashboard = () => {
           },
         });
 
-        setApplications(response.data.applications);
+        setApplications(response.data.applications ?? []);
       } catch (error) {
         console.log(error.response?.data?.message || error.message);
       } finally {

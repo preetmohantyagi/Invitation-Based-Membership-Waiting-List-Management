@@ -33,7 +33,7 @@ function useInvitations() {
     try {
       const response = await api.get("/api/admin/invitations");
 
-      setInvitations(response.data.invitations);
+      setInvitations(response.data.invitations ?? []);
       setStats(calculateInvitationStats(response.data.invitations));
     } catch (error) {
       console.error(

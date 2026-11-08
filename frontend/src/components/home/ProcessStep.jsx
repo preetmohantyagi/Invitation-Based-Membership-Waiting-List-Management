@@ -13,4 +13,3 @@ function ProcessStep({ number, title, description }) {
 }
 
 export default ProcessStep;
-a

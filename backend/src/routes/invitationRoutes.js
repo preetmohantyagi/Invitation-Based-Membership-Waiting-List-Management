@@ -6,12 +6,13 @@ const {
   createInvitation,
   createMemberInvitation,
 } = require("../controller/invitationController");
+const invitationValidateLimiter = require("../middleware/invitationLimitMiddleware");
 
 const { authMiddleware } = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const activeMemberMiddleware = require("../middleware/activeMemberMiddleware");
 
-router.post("/validate", validateInvitation);
+router.post("/validate", invitationValidateLimiter, validateInvitation);
 
 router.post(
   "/member",

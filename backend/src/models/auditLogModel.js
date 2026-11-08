@@ -21,6 +21,8 @@ const auditLogSchema = new mongoose.Schema(
           "APPLICATION_WITHDRAWN",
           "APPLICATION_NOTES_UPDATED",
           "MEMBER_QUOTA_UPDATED",
+          "MEMBER_SUSPENDED",
+          "MEMBER_REACTIVATED",
         ],
       },
       required: true,

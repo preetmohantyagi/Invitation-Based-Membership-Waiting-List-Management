@@ -170,6 +170,7 @@ async function reviewApplication(req, res, options) {
     errorMessage,
     failMessage,
     successMessage,
+    rejectionReason,
   } = options;
 
   const applicationId = req.params.id;
@@ -206,6 +207,9 @@ async function reviewApplication(req, res, options) {
     application.status = newApplicationStatus;
     application.reviewedBy = req.user._id;
     application.reviewedAt = new Date();
+    if (rejectionReason) {
+      application.rejectionReason = rejectionReason;
+    }
     await application.save({ session });
 
     user.accountStatus = newAccountStatus;
@@ -230,7 +234,9 @@ async function reviewApplication(req, res, options) {
           performedBy: req.user._id,
           action: auditAction,
           targetId: application._id,
-          details: `${auditText} ${user.email}`,
+          details: `${auditText} ${user.email}${
+            rejectionReason ? ` - Reason: ${rejectionReason}` : ""
+          }`,
         },
       ],
       { session },
@@ -275,15 +281,27 @@ function approveApplication(req, res) {
 }
 
 function rejectApplication(req, res) {
+  const { rejectionReason } = req.body || {};
+
+  if (rejectionReason !== undefined && typeof rejectionReason !== "string") {
+    return res.status(400).json({
+      message: "rejectionReason must be a string",
+    });
+  }
+  const reason = rejectionReason?.trim();
+
   return reviewApplication(req, res, {
     newApplicationStatus: "REJECTED",
     newAccountStatus: "REJECTED",
     allowedFrom: ["PENDING", "UNDER_REVIEW"],
     auditAction: "APPLICATION_REJECTED",
     auditText: "Application rejected for user",
+    rejectionReason: reason,
     notification: {
       type: "APPLICATION_REJECTED",
-      message: "Sorry, your membership application has been rejected.",
+      message: reason
+        ? `Sorry, your membership application has been rejected. Reason: ${reason}`
+        : "Sorry, your membership application has been rejected.",
     },
     errorMessage: "Only pending or under-review applications can be rejected",
     failMessage: "Application Rejection Failed",
@@ -392,14 +410,73 @@ async function getAuditLogs(req, res) {
 
 async function getActiveMembers(req, res) {
   const members = await userModel
-    .find({ role: "USER", accountStatus: "ACTIVE" })
-    .select("fullName email invitationQuota invitationsCreated")
+    .find({ role: "USER", accountStatus: { $in: ["ACTIVE", "SUSPENDED"] } })
+    .select("fullName email accountStatus invitationQuota invitationsCreated")
     .sort({ fullName: 1 });
 
   return res.status(200).json({
     count: members.length,
     members,
   });
+}
+
+async function updateMemberStatus(req, res) {
+  try {
+    const { memberId } = req.params;
+    const { accountStatus } = req.body;
+
+    if (!mongoose.isValidObjectId(memberId)) {
+      return res.status(400).json({ message: "Invalid member id" });
+    }
+
+    const allowedMoves = {
+      SUSPENDED: { from: "ACTIVE", action: "MEMBER_SUSPENDED" },
+      ACTIVE: { from: "SUSPENDED", action: "MEMBER_REACTIVATED" },
+    };
+
+    if (
+      typeof accountStatus !== "string" ||
+      !Object.hasOwn(allowedMoves, accountStatus)
+    ) {
+      return res.status(400).json({
+        message: "accountStatus can be either SUSPENDED or ACTIVE",
+      });
+    }
+    const move = allowedMoves[accountStatus];
+
+    const member = await userModel
+      .findOneAndUpdate(
+        { _id: memberId, role: "USER", accountStatus: move.from },
+        { $set: { accountStatus } },
+        { returnDocument: "after" },
+      )
+      .select(
+        "fullName email accountStatus invitationQuota invitationsCreated",
+      );
+
+    if (!member) {
+      return res.status(404).json({
+        message: `Member not found or not in ${move.from} status`,
+      });
+    }
+
+    await auditLogModel.create({
+      performedBy: req.user._id,
+      action: move.action,
+      targetId: member._id,
+      details: `Account of ${member.email} changed to ${accountStatus}`,
+    });
+
+    return res.status(200).json({
+      message: `Member ${accountStatus === "SUSPENDED" ? "suspended" : "reactivated"} successfully`,
+      member,
+    });
+  } catch (error) {
+    console.error("Update member status error:", error);
+    return res.status(500).json({
+      message: "Unable to update member status",
+    });
+  }
 }
 
 async function updateMemberQuota(req, res) {
@@ -430,7 +507,7 @@ async function updateMemberQuota(req, res) {
           $set: { invitationQuota },
         },
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         },
       )
@@ -473,4 +550,5 @@ module.exports = {
   getDashboardStats,
   getActiveMembers,
   updateMemberQuota,
+  updateMemberStatus,
 };

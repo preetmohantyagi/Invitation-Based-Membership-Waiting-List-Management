@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import NotificationList from "../components/NotificationList";
 import api from "../services/api";
 
 const accountMessages = {
-  PENDING_APPROVAL: "Your DNEG membership application is waiting for admin approval.",
+  PENDING_APPROVAL:
+    "Your DNEG membership application is waiting for admin approval.",
   REJECTED: "Your membership application was rejected.",
 };
 
@@ -44,12 +46,17 @@ const PendingApproval = () => {
     application && ["PENDING", "UNDER_REVIEW"].includes(application.status);
 
   const handleWithdraw = async () => {
-    if (!window.confirm("Are you sure you want to withdraw your application?")) {
+    if (
+      !window.confirm("Are you sure you want to withdraw your application?")
+    ) {
       return;
     }
     try {
       const response = await api.patch("/api/users/application/withdraw");
-      setApplication((previous) => ({ ...previous, status: response.data.status }));
+      setApplication((previous) => ({
+        ...previous,
+        status: response.data.status,
+      }));
       setMessage(response.data.message);
     } catch (error) {
       setMessage(error.response?.data?.message || "Could not withdraw");
@@ -57,7 +64,7 @@ const PendingApproval = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center gap-6 p-6">
       <div className="max-w-lg rounded-xl bg-white p-8 text-center shadow-md">
         <h1 className="text-2xl font-bold text-slate-900">
           Membership Application
@@ -73,6 +80,11 @@ const PendingApproval = () => {
             <span className="font-semibold">{application.status}</span>
           </p>
         )}
+        {application?.rejectionReason && (
+          <p className="mt-2 text-sm text-slate-600">
+            Reason: {application.rejectionReason}
+          </p>
+        )}
 
         {canWithdraw && (
           <button
@@ -84,6 +96,9 @@ const PendingApproval = () => {
         )}
 
         {message && <p className="mt-4 text-sm text-slate-500">{message}</p>}
+      </div>
+      <div className="w-full max-w-lg">
+        <NotificationList />
       </div>
     </div>
   );

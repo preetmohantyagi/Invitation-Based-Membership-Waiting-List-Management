@@ -5,7 +5,6 @@ const generateInviteCode = require("../utils/generateInviteCode");
 const auditLogModel = require("../models/auditLogModel");
 const mongoose = require("mongoose");
 
-
 function parseInvitationInput(body) {
   const { maxUses = 1, expiresAt } = body;
 
@@ -52,7 +51,10 @@ async function validateInvitation(req, res) {
       message: "Invitation Expired",
     });
   }
-  if (invitation.status === "EXHAUSTED" || invitation.usedCount >= invitation.maxUses) {
+  if (
+    invitation.status === "EXHAUSTED" ||
+    invitation.usedCount >= invitation.maxUses
+  ) {
     return res.status(400).json({
       message: "Invitation Exhausted",
     });
@@ -219,7 +221,7 @@ async function createMemberInvitation(req, res) {
           $inc: { invitationsCreated: 1 },
         },
         {
-          new: true,
+          returnDocument: "after",
           session,
         },
       );

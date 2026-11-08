@@ -15,6 +15,7 @@ const {
   getDashboardStats,
   getActiveMembers,
   updateMemberQuota,
+  updateMemberStatus
 } = require("../controller/adminController");
 
 const {
@@ -39,6 +40,7 @@ router.patch("/applications/:id/notes", updateApplicationNotes);
 
 router.get("/members", getActiveMembers);
 router.patch("/members/:memberId/quota", updateMemberQuota);
+router.patch("/members/:memberId/status", updateMemberStatus);
 
 router.get("/invitations", getAllInvitations);
 router.post("/invitations", createInvitation);

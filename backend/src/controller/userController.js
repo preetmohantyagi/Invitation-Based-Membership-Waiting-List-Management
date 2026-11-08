@@ -13,6 +13,10 @@ async function getMyApplication(req, res) {
   return res.status(200).json({
     status: application.status,
     priority: application.priority,
+    rejectionReason:
+      application.status === "REJECTED"
+        ? application.rejectionReason
+        : undefined,
   });
 }
 async function getMyInvitations(req, res) {

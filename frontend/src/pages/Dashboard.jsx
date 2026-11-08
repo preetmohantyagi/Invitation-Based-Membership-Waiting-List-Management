@@ -1,6 +1,7 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
 import MemberDashboardHeader from "../components/member/MemberDashboardHeader";
+import NotificationList from "../components/NotificationList";
 import MembershipStatusCard from "../components/member/MembershipStatusCard";
 import MemberInvitationSection from "../components/member/invitations/MemberInvitationSection";
 
@@ -12,6 +13,7 @@ const Dashboard = () => {
       <div className="mx-auto max-w-4xl space-y-6">
         <MemberDashboardHeader name={user?.fullName} />
         <MembershipStatusCard user={user} />
+        <NotificationList />
         <MemberInvitationSection />
       </div>
     </div>

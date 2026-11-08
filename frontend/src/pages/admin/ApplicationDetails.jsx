@@ -32,8 +32,18 @@ const ApplicationDetails = () => {
   }, [id]);
 
   const handleAction = async (action) => {
+    let body = {};
+    if (action === "reject") {
+      const reason = window.prompt("Rejection reason (optional):");
+      if (reason === null) return; // admin ne cancel kar diya
+      body = { rejectionReason: reason };
+    }
+
     try {
-      const response = await api.patch(`/api/admin/applications/${id}/${action}`);
+      const response = await api.patch(
+        `/api/admin/applications/${id}/${action}`,
+        body,
+      );
       alert(response.data.message);
       await fetchApplication();
     } catch (error) {
@@ -103,6 +113,10 @@ const ApplicationDetails = () => {
             <DetailItem label="Status" value={application.status} />
             <DetailItem label="Priority" value={application.priority} />
             <DetailItem
+              label="Rejection Reason"
+              value={application.rejectionReason}
+            />
+            <DetailItem
               label="Submitted On"
               value={
                 application.createdAt
@@ -129,14 +143,14 @@ const ApplicationDetails = () => {
             <DetailItem
               label="Invitation Source"
               value={
-                inviter?.role === "ADMIN" ? "Created by Admin" : "Created by Member"
+                inviter?.role === "ADMIN"
+                  ? "Created by Admin"
+                  : "Created by Member"
               }
             />
             <DetailItem
               label="Inviter"
-              value={
-                inviter ? `${inviter.fullName} (${inviter.email})` : "N/A"
-              }
+              value={inviter ? `${inviter.fullName} (${inviter.email})` : "N/A"}
             />
           </DetailSection>
 

@@ -60,10 +60,11 @@ const AdminDashboard = () => {
     fetchApplications();
   }, [search, status, priority, sort]);
 
-  const handleApplicationAction = async (applicationId, action) => {
+  const handleApplicationAction = async (applicationId, action, body = {}) => {
     try {
       const response = await api.patch(
         `/api/admin/applications/${applicationId}/${action}`,
+        body,
       );
 
       setApplications((previousApplications) =>
@@ -79,6 +80,14 @@ const AdminDashboard = () => {
     } catch (error) {
       alert(error.response?.data?.message || `${action} failed`);
     }
+  };
+
+  const handleReject = (applicationId) => {
+    const reason = window.prompt("Rejection reason (optional):");
+    if (reason === null) return; // admin ne cancel kar diya
+    handleApplicationAction(applicationId, "reject", {
+      rejectionReason: reason,
+    });
   };
   return (
     <div className="min-h-screen bg-slate-100 p-6">
@@ -113,7 +122,7 @@ const AdminDashboard = () => {
               applications={applications}
               onReview={(id) => handleApplicationAction(id, "review")}
               onApprove={(id) => handleApplicationAction(id, "approve")}
-              onReject={(id) => handleApplicationAction(id, "reject")}
+              onReject={handleReject}
             />
           )}
         </div>

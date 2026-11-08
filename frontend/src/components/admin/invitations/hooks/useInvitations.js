@@ -29,31 +29,74 @@ function useInvitations() {
   const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setInvitations(response.data.invitations);
-    setStats(calculateInvitationStats(response.data.invitations));
-    async function fetchInvitations() {
-      try {
-        const response = await api.get("/api/admin/invitations");
+  async function fetchInvitations() {
+    try {
+      const response = await api.get("/api/admin/invitations");
 
-        setInvitations(response.data.invitations);
-      } catch (error) {
-        console.error(
-          "Failed to fetch invitations:",
-          error.response?.data?.message || error.message,
-        );
-      } finally {
-        setLoading(false);
-      }
+      setInvitations(response.data.invitations);
+      setStats(calculateInvitationStats(response.data.invitations));
+    } catch (error) {
+      console.error(
+        "Failed to fetch invitations:",
+        error.response?.data?.message || error.message,
+      );
+    } finally {
+      setLoading(false);
     }
+  }
+  async function createInvitation(invitationData) {
+    try {
+      const response = await api.post("/api/admin/invitations", invitationData);
 
+      await fetchInvitations();
+
+      return {
+        success: true,
+        code: response.data.code,
+      };
+    } catch (error) {
+      console.error(
+        "Failed to create invitation:",
+        error.response?.data?.message || error.message,
+      );
+
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message,
+      };
+    }
+  }
+  async function revokeInvitation(invitationId) {
+    try {
+      await api.patch(`/api/admin/invitations/${invitationId}/revoke`);
+
+      await fetchInvitations();
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error(
+        "Failed to revoke invitation:",
+        error.response?.data?.message || error.message,
+      );
+
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message,
+      };
+    }
+  }
+
+  useEffect(() => {
     fetchInvitations();
   }, []);
-
   return {
     invitations,
     loading,
-    stats
+    stats,
+    createInvitation,
+    revokeInvitation
   };
 }
 

@@ -28,6 +28,11 @@ async function authMiddleware(req, res, next) {
         message: "User not found",
       });
     }
+    if (["SUSPENDED", "DISABLED"].includes(user.accountStatus)) {
+      return res.status(403).json({
+        message: "Your account is not allowed to access the platform",
+      });
+    }
     req.user = user;
     return next();
   } catch (error) {
